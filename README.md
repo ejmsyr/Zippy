@@ -102,3 +102,11 @@ Zippy/
 
 **Author:**  
 [Your Name Here]
+## Testing
+
+To run the unit tests:
+
+```bash
+pip install -r requirements.txt
+pytest
+```
