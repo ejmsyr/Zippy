@@ -46,31 +46,44 @@ def single_round_decode(encoded_input_str, tot, pri, chunk_size, original_indice
     decoded_indices_str = decoded_indices_str[:original_indices_len] # Remove padding
     return decoded_indices_str
 
-def multi_round_decode():
+def multi_round_decode(private_keys):
     with open("encoded_output.txt", "r") as f:
         all_round_data = json.load(f)
+
+    if len(private_keys) != len(all_round_data):
+        raise ValueError("Number of private keys must match number of encoding rounds")
 
     current_decoded_indices_str = ""
 
     # Iterate through rounds in reverse order
     for i in range(len(all_round_data) - 1, -1, -1):
         round_data = all_round_data[i]
-        
+
         tot = round_data["tot"]
-        pri = round_data["pri"]
+        pri = private_keys[i]
         chunk_size = round_data["chunk_size"]
         original_indices_len = round_data["original_indices_len"]
-        salt_length = round_data["salt_length"]
-        is_obfuscated = round_data["is_obfuscated"]
 
-        if i == len(all_round_data) - 1: # Last round in the encoding process (first to decode)
+        if i == len(all_round_data) - 1:  # Last round in the encoding process (first to decode)
             encoded_str_for_this_round = round_data["encoded_indices"]
+            salt_length = round_data["salt_length"]
+            is_obfuscated = round_data["is_obfuscated"]
         else:
-            encoded_str_for_this_round = current_decoded_indices_str # Output of previous decode is input for this decode
+            encoded_str_for_this_round = current_decoded_indices_str  # Output of previous decode is input for this decode
+            salt_length = 0
+            is_obfuscated = False
 
-        current_decoded_indices_str = single_round_decode(encoded_str_for_this_round, tot, pri, chunk_size, original_indices_len, salt_length, is_obfuscated)
+        current_decoded_indices_str = single_round_decode(
+            encoded_str_for_this_round,
+            tot,
+            pri,
+            chunk_size,
+            original_indices_len,
+            salt_length,
+            is_obfuscated,
+        )
 
-        if i == 0: # First round in the encoding process (last to decode)
+        if i == 0:  # First round in the encoding process (last to decode)
             iv_b64 = round_data["iv"]
             encrypted_dict_b64 = round_data["encrypted_dict"]
 
@@ -85,7 +98,7 @@ def multi_round_decode():
 
             # Now map indices back to chars
             output = []
-            for j in range(0, len(current_decoded_indices_str), 2): # Iterate by 2 digits for each character index
+            for j in range(0, len(current_decoded_indices_str), 2):  # Iterate by 2 digits for each character index
                 idx = current_decoded_indices_str[j:j+2]
                 if idx in dictionary:
                     output.append(dictionary[idx])
@@ -94,5 +107,7 @@ def multi_round_decode():
             return ''.join(output)
 
 if __name__ == "__main__":
-    decoded_text = multi_round_decode()
+    with open("private_keys.json", "r") as f:
+        private_keys = json.load(f)
+    decoded_text = multi_round_decode(private_keys)
     print(decoded_text)
