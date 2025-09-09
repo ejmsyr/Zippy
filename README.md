@@ -12,10 +12,10 @@ Zippy is not intended for production use, but as a learning tool for custom enco
   Each unique character in the input is assigned a 2-digit index as it appears.
 - **Modular Exponentiation:**  
   Each index is obfuscated using modular exponentiation (`y = x^pub mod tot`) for basic encryption.
-- **File Output:**  
-  The dictionary and encoded data are saved to `encoded.txt`.
-- **Decoding:**  
-  The `Unzippy.py` script reverses the process using the private key.
+- **File Output:**
+  The encoded data for each round is saved to `encoded_output.txt`, while private keys are stored separately in `private_keys.json`.
+- **Decoding:**
+  The `Unzippy.py` script reverses the process using private keys stored separately in `private_keys.json`.
 
 ---
 
@@ -27,17 +27,17 @@ Zippy is not intended for production use, but as a learning tool for custom enco
    Reads the contents of `texsample.txt`.
 2. **Build Dictionary:**  
    Assigns each unique character a 2-digit index in order of appearance.
-3. **Encode:**  
+3. **Encode:**
    Replaces each character with its index, then encodes each 2-digit index using modular exponentiation.
-4. **Save:**  
-   Writes the dictionary and encoded string to `encoded.txt`.
+4. **Save:**
+   Writes round metadata to `encoded_output.txt` and saves the private keys to `private_keys.json`.
 
 ### Decompression (`Unzippy.py`)
 
-1. **Read Encoded File:**  
-   Loads the dictionary and encoded string from `encoded.txt`.
-2. **Decode:**  
-   Uses the private key to reverse the modular exponentiation and recover the original indices.
+1. **Read Encoded File:**
+   Loads the dictionary and encoded string from `encoded_output.txt`.
+2. **Decode:**
+   Uses the private keys supplied by the caller to reverse the modular exponentiation and recover the original indices.
 3. **Reconstruct:**  
    Maps indices back to characters using the dictionary and prints the original text.
 
@@ -52,7 +52,7 @@ python Zipper.py
 ```
 
 - Input: `texsample.txt`
-- Output: `encoded.txt` (dictionary on the first line, encoded string on the second)
+- Output: `encoded_output.txt` and `private_keys.json`
 
 ### Decompress
 
@@ -60,7 +60,7 @@ python Zipper.py
 python Unzippy.py
 ```
 
-- Input: `encoded.txt`
+- Input: `encoded_output.txt` and `private_keys.json`
 - Output: Prints the reconstructed original text to the terminal
 
 ---
@@ -72,7 +72,7 @@ python Unzippy.py
 hello world
 ```
 
-**Output (`encoded.txt`):**
+**Output (`encoded_output.txt`):**
 ```
 h00e01l02o03 04w05r06d07
 0001020203044053056032037
@@ -87,14 +87,15 @@ Zippy/
 ├── Zipper.py
 ├── Unzippy.py
 ├── texsample.txt
-├── encoded.txt
+├── encoded_output.txt
+├── private_keys.json
 ```
 
 ---
 
 ## Notes
 
-- The keys (`tot`, `pub`, `pri`) are hardcoded for demonstration.
+- The private keys are saved to `private_keys.json` and must be supplied during decoding.
 - The encoding is not cryptographically secure.
 - For educational and experimental use only.
 

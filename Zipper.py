@@ -65,19 +65,27 @@ def single_round_rsa_encode(input_data, tot, pub, chunk_size=2, is_first_round=T
 
 def multi_round_encode(text, num_rounds, initial_chunk_size=2, salt_length=0, obfuscate_output=True):
     all_round_data = []
-    current_input_for_next_round = text # This will be the raw data for the next round
+    private_keys = []
+    current_input_for_next_round = text  # This will be the raw data for the next round
 
     for i in range(num_rounds):
-        tot, pub, pri = generate_keys() # New keys for each round
-        
+        tot, pub, pri = generate_keys()  # New keys for each round
+
         # Encode the current input using RSA
-        round_rsa_data = single_round_rsa_encode(current_input_for_next_round, tot, pub, initial_chunk_size, is_first_round=(i == 0), pri_key_for_shuffle=pri)
-        
+        round_rsa_data = single_round_rsa_encode(
+            current_input_for_next_round,
+            tot,
+            pub,
+            initial_chunk_size,
+            is_first_round=(i == 0),
+            pri_key_for_shuffle=pri,
+        )
+
         encoded_str_raw = round_rsa_data["encoded_indices_raw"]
 
         # Add salt/nonce
         if salt_length > 0:
-            salt = ''.join(random.choices('0123456789', k=salt_length)) # Random digits as salt
+            salt = ''.join(random.choices('0123456789', k=salt_length))  # Random digits as salt
             encoded_str_with_salt = encoded_str_raw + salt
         else:
             encoded_str_with_salt = encoded_str_raw
@@ -88,9 +96,9 @@ def multi_round_encode(text, num_rounds, initial_chunk_size=2, salt_length=0, ob
             final_encoded_bytes = base64.urlsafe_b64encode(compressed_encoded_str)
             final_encoded_str = final_encoded_bytes.decode('utf-8')
         else:
-            final_encoded_str = encoded_str_raw # Store raw if not obfuscating
+            final_encoded_str = encoded_str_raw  # Store raw if not obfuscating
 
-        # Store all data for the round
+        # Store all data for the round except the private key
         round_data = {
             "iv": round_rsa_data["iv"],
             "encrypted_dict": round_rsa_data["encrypted_dict"],
@@ -98,12 +106,12 @@ def multi_round_encode(text, num_rounds, initial_chunk_size=2, salt_length=0, ob
             "original_indices_len": round_rsa_data["original_indices_len"],
             "tot": tot,
             "pub": pub,
-            "pri": pri, # Store pri for decoding
             "chunk_size": initial_chunk_size,
             "salt_length": salt_length,
-            "is_obfuscated": obfuscate_output
+            "is_obfuscated": obfuscate_output,
         }
         all_round_data.append(round_data)
+        private_keys.append(pri)
 
         # Prepare input for the next round: it's the raw encoded indices from this round
         current_input_for_next_round = encoded_str_raw
@@ -111,6 +119,12 @@ def multi_round_encode(text, num_rounds, initial_chunk_size=2, salt_length=0, ob
     # Store all round data in a single file
     with open("encoded_output.txt", "w") as f:
         f.write(json.dumps(all_round_data, indent=4))
+
+    # Store private keys separately for the caller
+    with open("private_keys.json", "w") as f:
+        json.dump(private_keys, f)
+
+    return private_keys
 
 if __name__ == "__main__":
     with open("texsample.txt", "r") as f:
