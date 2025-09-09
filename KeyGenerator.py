@@ -1,4 +1,4 @@
-import random
+from Crypto.Random import random
 
 def is_prime(n, k=5):
     """Miller-Rabin primality test."""
@@ -32,7 +32,9 @@ def generate_prime(bits):
     """Generate a prime number with a given number of bits."""
     while True:
         p = random.getrandbits(bits)
-        if p % 2 != 0 and is_prime(p):
+        # Ensure the candidate has the correct bit length and is odd
+        p |= (1 << (bits - 1)) | 1
+        if p % 2 != 0 and is_prime(p) and p.bit_length() == bits:
             return p
 
 def gcd(a, b):
@@ -54,6 +56,9 @@ def mod_inverse(a, m):
 
 def generate_keys(bits=16):
     """Generate public and private keys."""
+    if bits < 16:
+        raise ValueError("bits must be at least 16 to ensure minimal entropy")
+
     p = generate_prime(bits)
     q = generate_prime(bits)
     tot = p * q

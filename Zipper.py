@@ -1,12 +1,38 @@
-import random
 import hashlib
 import json
 import zlib
-from KeyGenerator import generate_keys
+import base64
+import math
+import secrets
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Random import get_random_bytes
-import base64
+from Crypto.Random import random as crypto_random
+from KeyGenerator import generate_keys
+
+
+def _secure_deterministic_prng(seed: bytes) -> crypto_random.StrongRandom:
+    """Create a cryptographically secure deterministic PRNG.
+
+    The generator is seeded with ``seed`` and produces reproducible output by
+    deriving random bytes from SHA-256 in counter mode.  The resulting PRNG
+    exposes the same interface as ``random.Random`` but uses strong randomness
+    internally.
+    """
+
+    seed_hash = hashlib.sha256(seed).digest()
+    counter = 0
+
+    def randfunc(n: int) -> bytes:
+        nonlocal counter
+        output = b""
+        while len(output) < n:
+            ctr_bytes = counter.to_bytes(16, "big")
+            output += hashlib.sha256(seed_hash + ctr_bytes).digest()
+            counter += 1
+        return output[:n]
+
+    return crypto_random.StrongRandom(randfunc=randfunc)
 
 def single_round_rsa_encode(input_data, tot, pub, chunk_size=2, is_first_round=True, pri_key_for_shuffle=None):
     dict_str = ""
@@ -15,9 +41,9 @@ def single_round_rsa_encode(input_data, tot, pub, chunk_size=2, is_first_round=T
     original_indices_str = ""
 
     if is_first_round:
-        # Create a seeded random number generator for deterministic shuffle
-        seed = int(hashlib.sha256(str(pri_key_for_shuffle).encode()).hexdigest(), 16)
-        seeded_random = random.Random(seed)
+        # Create a seeded cryptographically secure PRNG for deterministic shuffle
+        seed_bytes = str(pri_key_for_shuffle).encode()
+        seeded_random = _secure_deterministic_prng(seed_bytes)
 
         unique_chars = sorted(list(set(input_data)))
         seeded_random.shuffle(unique_chars)
@@ -77,7 +103,10 @@ def multi_round_encode(text, num_rounds, initial_chunk_size=2, salt_length=0, ob
 
         # Add salt/nonce
         if salt_length > 0:
-            salt = ''.join(random.choices('0123456789', k=salt_length)) # Random digits as salt
+            entropy = salt_length * math.log2(10)
+            if entropy < 32:
+                raise ValueError("Salt length must provide at least 32 bits of entropy")
+            salt = ''.join(secrets.choice('0123456789') for _ in range(salt_length))
             encoded_str_with_salt = encoded_str_raw + salt
         else:
             encoded_str_with_salt = encoded_str_raw
