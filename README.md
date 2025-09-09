@@ -94,11 +94,11 @@ Zippy/
 
 ## Notes
 
-- The keys (`tot`, `pub`, `pri`) are hardcoded for demonstration.
+- Keys are generated with 2048-bit primes by default, producing large RSA moduli.
 - The encoding is not cryptographically secure.
 - For educational and experimental use only.
 
 ---
 
-**Author:**  
+**Author:**
 [Your Name Here]

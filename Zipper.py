@@ -68,7 +68,7 @@ def multi_round_encode(text, num_rounds, initial_chunk_size=2, salt_length=0, ob
     current_input_for_next_round = text # This will be the raw data for the next round
 
     for i in range(num_rounds):
-        tot, pub, pri = generate_keys() # New keys for each round
+        tot, pub, pri = generate_keys() # New 2048-bit keys for each round
         
         # Encode the current input using RSA
         round_rsa_data = single_round_rsa_encode(current_input_for_next_round, tot, pub, initial_chunk_size, is_first_round=(i == 0), pri_key_for_shuffle=pri)

@@ -52,8 +52,13 @@ def mod_inverse(a, m):
         x1 += m0
     return x1
 
-def generate_keys(bits=16):
-    """Generate public and private keys."""
+def generate_keys(bits=2048):
+    """Generate public and private keys.
+
+    Args:
+        bits (int): Bit length of the primes to generate. Defaults to 2048,
+            producing an RSA modulus of roughly 4096 bits.
+    """
     p = generate_prime(bits)
     q = generate_prime(bits)
     tot = p * q
@@ -71,7 +76,7 @@ def generate_keys(bits=16):
     return (tot, pub, pri)
 
 if __name__ == '__main__':
-    tot, pub, pri = generate_keys(1024)
+    tot, pub, pri = generate_keys()
     print(f"tot={tot}")
     print(f"pub={pub}")
     print(f"pri={pri}")
