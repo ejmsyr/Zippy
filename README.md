@@ -30,12 +30,12 @@ Zippy is not intended for production use, but as a learning tool for custom enco
 3. **Encode:**  
    Replaces each character with its index, then encodes each 2-digit index using modular exponentiation.
 4. **Save:**  
-   Writes the dictionary and encoded string to `encoded.txt`.
+   Writes per-round metadata and encoded data as JSON to `encoded_output.txt`.
 
 ### Decompression (`Unzippy.py`)
 
 1. **Read Encoded File:**  
-   Loads the dictionary and encoded string from `encoded.txt`.
+   Loads per-round metadata and encoded strings from `encoded_output.txt`.
 2. **Decode:**  
    Uses the private key to reverse the modular exponentiation and recover the original indices.
 3. **Reconstruct:**  
@@ -45,38 +45,56 @@ Zippy is not intended for production use, but as a learning tool for custom enco
 
 ## Usage
 
+### CLI
+
+Both encoder and decoder provide a simple CLI with sensible defaults.
+
+Commonly used options:
+- `--input/-i`: input file path
+- `--output/-o`: output file path (JSON for encoder, text for decoder)
+- `--rounds/-r`: number of encoding rounds (encoder)
+- `--chunk-size/-c`: chunk size in digits per char index (encoder)
+- `--salt-length/-s`: salt digits appended per round (encoder)
+- `--obfuscate/--no-obfuscate`: toggle zlib+base64 obfuscation (encoder)
+
 ### Compress
 
 ```bash
-python Zipper.py
+python Zipper.py --input texsample.txt --output encoded_output.txt --rounds 2 --chunk-size 2 --salt-length 16 --obfuscate
 ```
 
 - Input: `texsample.txt`
-- Output: `encoded.txt` (dictionary on the first line, encoded string on the second)
+- Output: `encoded_output.txt` (JSON array with one object per round)
+
+Minimal: encode literal text
+```bash
+python Zipper.py 'Hello world!' --output out.json
+```
 
 ### Decompress
 
 ```bash
-python Unzippy.py
+python Unzippy.py --input encoded_output.txt --output decoded.txt
 ```
 
-- Input: `encoded.txt`
+Minimal: decode from stdin
+```bash
+cat encoded_output.txt | python Unzippy.py -i - > decoded.txt
+```
+
+Positional path also works
+```bash
+python Unzippy.py encoded_output.txt --output decoded.txt
+```
+
+- Input: `encoded_output.txt`
 - Output: Prints the reconstructed original text to the terminal
 
 ---
 
 ## Example
 
-**Input (`texsample.txt`):**
-```
-hello world
-```
-
-**Output (`encoded.txt`):**
-```
-h00e01l02o03 04w05r06d07
-0001020203044053056032037
-```
+Run `python Zipper.py` to produce `encoded_output.txt`, then `python Unzippy.py` to print the original text.
 
 ---
 
@@ -87,21 +105,24 @@ Zippy/
 ├── Zipper.py
 ├── Unzippy.py
 ├── texsample.txt
-├── encoded.txt
+├── encoded_output.txt
 ```
 
 ---
 
 ## Notes
 
-- The keys (`tot`, `pub`, `pri`) are hardcoded for demonstration.
+- The keys (`tot`, `pub`, `pri`) are generated per round for demonstration and stored in `encoded_output.txt` for decoding.
 - The encoding is not cryptographically secure.
 - For educational and experimental use only.
+
+Optional dependency: If PyCryptodome is unavailable, the encoder stores a base64 plaintext dictionary for decoding instead of AES-encrypting it.
 
 ---
 
 **Author:**  
 [Your Name Here]
+<<<<<<< Updated upstream
 ## Testing
 
 To run the unit tests:
@@ -110,3 +131,5 @@ To run the unit tests:
 pip install -r requirements.txt
 pytest
 ```
+=======
+>>>>>>> Stashed changes
