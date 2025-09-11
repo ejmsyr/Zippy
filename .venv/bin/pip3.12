@@ -1,4 +1,4 @@
-#!/home/x/projects/Zippy/.venv/bin/python3
+#!/home/x/projects/Zippy/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
