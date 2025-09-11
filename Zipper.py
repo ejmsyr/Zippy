@@ -1,15 +1,38 @@
 import hashlib
 import json
 import zlib
-<<<<<<< Updated upstream
 import base64
 import math
 import secrets
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad
-from Crypto.Random import get_random_bytes
-from Crypto.Random import random as crypto_random
+import argparse
+import sys
+from pathlib import Path
 from KeyGenerator import generate_keys
+
+# Optional dependency: PyCryptodome. Provide graceful fallback when unavailable.
+try:
+    from Crypto.Cipher import AES
+    from Crypto.Util.Padding import pad
+    from Crypto.Random import get_random_bytes
+    from Crypto.Random import random as crypto_random
+    HAVE_CRYPTO = True
+except ImportError:
+    import os
+    HAVE_CRYPTO = False
+
+    def pad(data: bytes, block_size: int) -> bytes:  # PKCS#7-like padding
+        pad_len = (block_size - (len(data) % block_size)) or block_size
+        return data + bytes([pad_len]) * pad_len
+
+    def get_random_bytes(n: int) -> bytes:
+        return os.urandom(n)
+
+    class DummyCryptoRandom:
+        def shuffle(self, sequence):
+            import random
+            random.shuffle(sequence)
+
+    crypto_random = DummyCryptoRandom()
 
 
 def _secure_deterministic_prng(seed: bytes) -> crypto_random.StrongRandom:
@@ -34,30 +57,7 @@ def _secure_deterministic_prng(seed: bytes) -> crypto_random.StrongRandom:
         return output[:n]
 
     return crypto_random.StrongRandom(randfunc=randfunc)
-=======
-from KeyGenerator import generate_keys
-import base64
-import argparse
-import sys
-from pathlib import Path
 
-# Optional dependency: PyCryptodome. Provide graceful fallback when unavailable.
-try:
-    from Crypto.Cipher import AES  # type: ignore
-    from Crypto.Util.Padding import pad  # type: ignore
-    from Crypto.Random import get_random_bytes  # type: ignore
-    HAVE_CRYPTO = True
-except Exception:
-    import os
-    HAVE_CRYPTO = False
-
-    def pad(data: bytes, block_size: int) -> bytes:  # PKCS#7-like padding
-        pad_len = (block_size - (len(data) % block_size)) or block_size
-        return data + bytes([pad_len]) * pad_len
-
-    def get_random_bytes(n: int) -> bytes:
-        return os.urandom(n)
->>>>>>> Stashed changes
 
 def single_round_rsa_encode(input_data, tot, pub, chunk_size=2, is_first_round=True, pri_key_for_shuffle=None):
     dict_str = ""

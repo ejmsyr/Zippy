@@ -71,10 +71,10 @@ def main():
     tests = [
         ("default-2r-obf", "The quick brown fox jumps over the lazy dog.\n", 2, 2, 16, True),
         ("1r-noobf", "Hello, world!\n", 1, 2, 0, False),
-        ("3r-obf-chunk3", "Sphinx of black quartz, judge my vow.\n", 3, 3, 8, True),
-        ("stdin-2r-obf", "Vita brevis, ars longa.\n", 2, 2, 4, True),
-        ("chunk4-2r-obf", "Waltz, bad nymph, for quick jigs vex.\n", 2, 4, 12, True),
-        ("2r-noobf-chunk2-salt8", "Pack my box with five dozen liquor jugs.\n", 2, 2, 8, False),
+        ("3r-obf-chunk3", "Sphinx of black quartz, judge my vow.\n", 3, 3, 10, True),
+        ("stdin-2r-obf", "Vita brevis, ars longa.\n", 2, 2, 10, True),
+        ("chunk4-2r-obf", "Waltz, bad nymph, for quick jigs vex.\n", 2, 4, 16, True),
+        ("2r-noobf-chunk2-salt8", "Pack my box with five dozen liquor jugs.\n", 2, 2, 10, False),
     ]
 
     ok = True

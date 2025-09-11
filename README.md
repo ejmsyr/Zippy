@@ -1,100 +1,98 @@
 # Zippy
 
-**Zippy** is a simple, educational text compressor and decompressor written in Python.  
-It demonstrates dictionary-based encoding, modular exponentiation for obfuscation, and basic file I/O.  
-Zippy is not intended for production use, but as a learning tool for custom encoding and decoding workflows.
+**Zippy** is a simple, educational tool for encoding and decoding text and binary files in Python. It demonstrates several concepts, including dictionary-based encoding, a multi-round RSA-like obfuscation scheme, and the use of salt and obfuscation to make the output more complex. Zippy is not intended for production use but as a learning tool for custom encoding and decoding workflows.
 
 ---
 
 ## Features
 
-- **Dictionary Encoding:**  
-  Each unique character in the input is assigned a 2-digit index as it appears.
-- **Modular Exponentiation:**  
-  Each index is obfuscated using modular exponentiation (`y = x^pub mod tot`) for basic encryption.
-- **File Output:**  
-  The dictionary and encoded data are saved to `encoded.txt`.
-- **Decoding:**  
-  The `Unzippy.py` script reverses the process using the private key.
+- **Dictionary Encoding:** Each unique character in the input is assigned a 2-digit index.
+- **Multi-Round Obfuscation:** The indexed data is obfuscated over multiple rounds using an RSA-like algorithm. New keys are generated for each round.
+- **Salting:** A random salt can be added to the encoded data in each round to increase entropy.
+- **Obfuscation:** The output of each round can be compressed with `zlib` and encoded with `base64` to make it non-obvious.
+- **Binary Mode:** Zippy can handle binary files by mapping each byte to a character using a Latin-1 encoding.
+- **Command-Line Interface:** Both the encoder (`Zipper.py`) and decoder (`Unzippy.py`) provide a simple and flexible command-line interface.
+- **Optional Cryptography:** Zippy can use `pycryptodome` to encrypt the dictionary, but it will gracefully fall back to a plaintext dictionary if the library is not available.
 
 ---
 
 ## How It Works
 
-### Compression (`Zipper.py`)
+### Encoding (`Zipper.py`)
 
-1. **Read Input:**  
-   Reads the contents of `texsample.txt`.
-2. **Build Dictionary:**  
-   Assigns each unique character a 2-digit index in order of appearance.
-3. **Encode:**  
-   Replaces each character with its index, then encodes each 2-digit index using modular exponentiation.
-4. **Save:**  
-   Writes per-round metadata and encoded data as JSON to `encoded_output.txt`.
+1.  **Read Input:** Reads the input from a file, stdin, or a command-line argument.
+2.  **Build Dictionary:** In the first round, it builds a dictionary that maps each unique character to a 2-digit index.
+3.  **Encode:** It then replaces each character with its corresponding index.
+4.  **Multi-Round Obfuscation:** For each round, it obfuscates the data using modular exponentiation (`y = x^pub mod tot`).
+5.  **Salt and Obfuscate:** It can add a salt to the data and obfuscate it using `zlib` and `base64`.
+6.  **Save:** It writes all the data for each round, including the keys and other metadata, to a JSON file.
 
-### Decompression (`Unzippy.py`)
+### Decoding (`Unzippy.py`)
 
-1. **Read Encoded File:**  
-   Loads per-round metadata and encoded strings from `encoded_output.txt`.
-2. **Decode:**  
-   Uses the private key to reverse the modular exponentiation and recover the original indices.
-3. **Reconstruct:**  
-   Maps indices back to characters using the dictionary and prints the original text.
+1.  **Read Encoded File:** Loads the per-round metadata and encoded strings from the JSON file.
+2.  **Decode:** It processes the rounds in reverse order, using the private key for each round to reverse the modular exponentiation.
+3.  **Reconstruct:** In the final step, it uses the dictionary from the first round to map the indices back to characters and reconstruct the original data.
 
 ---
 
 ## Usage
 
-### CLI
+### Command-Line Interface
 
-Both encoder and decoder provide a simple CLI with sensible defaults.
+Both `Zipper.py` and `Unzippy.py` provide a command-line interface with several options:
 
-Commonly used options:
-- `--input/-i`: input file path
-- `--output/-o`: output file path (JSON for encoder, text for decoder)
-- `--rounds/-r`: number of encoding rounds (encoder)
-- `--chunk-size/-c`: chunk size in digits per char index (encoder)
-- `--salt-length/-s`: salt digits appended per round (encoder)
-- `--obfuscate/--no-obfuscate`: toggle zlib+base64 obfuscation (encoder)
+**`Zipper.py`**
 
-### Compress
+-   `--input`/`-i`: Path to the input file or `-` for stdin.
+-   `--output`/`-o`: Path to the output JSON file.
+-   `--rounds`/`-r`: Number of encoding rounds.
+-   `--chunk-size`/`-c`: Chunk size in digits per character index.
+-   `--salt-length`/`-s`: Number of salt digits to append in each round.
+-   `--binary`: Treat the input as a binary file.
+-   `--obfuscate`/`--no-obfuscate`: Enable/disable `zlib` and `base64` obfuscation.
 
-```bash
-python Zipper.py --input texsample.txt --output encoded_output.txt --rounds 2 --chunk-size 2 --salt-length 16 --obfuscate
-```
+**`Unzippy.py`**
 
-- Input: `texsample.txt`
-- Output: `encoded_output.txt` (JSON array with one object per round)
+-   `--input`/`-i`: Path to the input JSON file or `-` for stdin.
+-   `--output`/`-o`: Path to the output file (prints to stdout by default).
 
-Minimal: encode literal text
-```bash
-python Zipper.py 'Hello world!' --output out.json
-```
+### Examples
 
-### Decompress
+**Encode a file:**
 
 ```bash
-python Unzippy.py --input encoded_output.txt --output decoded.txt
+python3 Zipper.py -i texsample.txt -o encoded.json
 ```
 
-Minimal: decode from stdin
+**Decode a file:**
+
 ```bash
-cat encoded_output.txt | python Unzippy.py -i - > decoded.txt
+python3 Unzippy.py -i encoded.json -o decoded.txt
 ```
 
-Positional path also works
+**Encode a string:**
+
 ```bash
-python Unzippy.py encoded_output.txt --output decoded.txt
+python3 Zipper.py "Hello, world!" -o hello.json
 ```
 
-- Input: `encoded_output.txt`
-- Output: Prints the reconstructed original text to the terminal
+**Use multiple rounds and a salt:**
 
----
+```bash
+python3 Zipper.py -i texsample.txt -o encoded.json -r 3 -s 16
+```
 
-## Example
+**Encode a binary file:**
 
-Run `python Zipper.py` to produce `encoded_output.txt`, then `python Unzippy.py` to print the original text.
+```bash
+python3 Zipper.py -i my_image.png -o image.json --binary
+```
+
+**Decode from stdin:**
+
+```bash
+cat encoded.json | python3 Unzippy.py -i -
+```
 
 ---
 
@@ -102,34 +100,49 @@ Run `python Zipper.py` to produce `encoded_output.txt`, then `python Unzippy.py`
 
 ```
 Zippy/
+├── .git/
+├── .venv/
+├── scripts/
+│   ├── run_tests.py
+│   └── smoke_tests.py
+├── tests/
+│   ├── test_cli_roundtrip.py
+│   └── test_zippy.py
+├── KeyGenerator.py
 ├── Zipper.py
 ├── Unzippy.py
-├── texsample.txt
-├── encoded_output.txt
+├── requirements.txt
+├── README.md
+├── Makefile
+├── TODO.md
+└── ...
 ```
 
 ---
 
-## Notes
-
-- The keys (`tot`, `pub`, `pri`) are generated per round for demonstration and stored in `encoded_output.txt` for decoding.
-- The encoding is not cryptographically secure.
-- For educational and experimental use only.
-
-Optional dependency: If PyCryptodome is unavailable, the encoder stores a base64 plaintext dictionary for decoding instead of AES-encrypting it.
-
----
-
-**Author:**  
-[Your Name Here]
-<<<<<<< Updated upstream
 ## Testing
 
-To run the unit tests:
+To run the tests, first install the dependencies:
 
 ```bash
+source .venv/bin/activate
 pip install -r requirements.txt
-pytest
 ```
-=======
->>>>>>> Stashed changes
+
+Then, run the test script:
+
+```bash
+python3 scripts/run_tests.py
+```
+
+---
+
+## Project Status
+
+This project is intended for educational purposes only and is not suitable for production use. The obfuscation scheme is not cryptographically secure.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

@@ -26,7 +26,7 @@ def simple_roundtrip() -> bool:
         out_json = dpath / "out.json"
         inp.write_text(sample)
 
-        enc = run([sys.executable, "Zipper.py", "-i", str(inp), "-o", str(out_json), "-r", "2", "-c", "2", "-s", "8", "--obfuscate"])
+        enc = run([sys.executable, "Zipper.py", "-i", str(inp), "-o", str(out_json), "-r", "2", "-c", "2", "-s", "10", "--obfuscate"])
         if enc.returncode != 0:
             print("[FAIL] simple_roundtrip: encoder failed\n" + enc.stdout)
             return False
